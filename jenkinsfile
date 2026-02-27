@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven-3.9.12'
+    }
+
+    stages {
+
+        stage('Clone Code') {
+            steps {
+                echo 'Cloning code from GitHub...'
+                git branch: 'main',
+                    credentialsId: 'github-creds',
+                    url: 'https://github.com/yuvraj9799/jenkins-war-demo.git'
+            }
+        }
+
+        stage('Build WAR') {
+            steps {
+                echo 'Building WAR file with Maven...'
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                echo 'Deploying WAR to Tomcat...'
+                deploy adapters: [
+                    tomcat9(
+                        credentialsId: 'tomcat-creds',
+                        path: '',
+                        url: 'http://43.205.129.46:8090'
+                    )
+                ],
+                contextPath: 'myapp-pipeline',
+                war: '**/*.war'
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo 'Pipeline SUCCESS! Website is live!'
+        }
+        failure {
+            echo 'Pipeline FAILED! Check the logs!'
+        }
+    }
+}
