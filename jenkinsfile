@@ -9,7 +9,7 @@ pipeline {
 
         stage('Clone Code') {
             steps {
-                echo 'Cloning code from GitHub...'
+                echo 'Cloning from GitHub...'
                 git branch: 'main',
                     credentialsId: 'github-creds',
                     url: 'https://github.com/yuvraj9799/jenkins-war-demo.git'
@@ -18,14 +18,23 @@ pipeline {
 
         stage('Build WAR') {
             steps {
-                echo 'Building WAR file with Maven...'
+                echo 'Building with Maven...'
                 sh 'mvn clean package'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                echo 'Running SonarQube Analysis...'
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar'
+                }
             }
         }
 
         stage('Deploy to Tomcat') {
             steps {
-                echo 'Deploying WAR to Tomcat...'
+                echo 'Deploying to Tomcat...'
                 deploy adapters: [
                     tomcat9(
                         credentialsId: 'tomcat-creds',
@@ -37,15 +46,14 @@ pipeline {
                 war: '**/*.war'
             }
         }
-
     }
 
     post {
         success {
-            echo 'Pipeline SUCCESS! Website is live!'
+            echo 'Pipeline SUCCESS!'
         }
         failure {
-            echo 'Pipeline FAILED! Check the logs!'
+            echo 'Pipeline FAILED!'
         }
     }
 }
